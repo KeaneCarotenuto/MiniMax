@@ -38,7 +38,7 @@ vector<int>toMake = { 6, 5, 8, 7,2,1,3,4};
 
 int CheckWin(Node* _parent);
 
-void makeNode(Node* _parent, int currentDepth, bool isX) {
+void makeNodes(Node* _parent, int currentDepth, bool isX) {
 	_parent->level = currentDepth;
 	
 	/*if (currentDepth == maxDepth) {
@@ -93,7 +93,7 @@ void makeNode(Node* _parent, int currentDepth, bool isX) {
 
 					child->state.board[y][x] = (isX ? 'X' : 'Y');
 
-					makeNode(child, currentDepth + 1, !isX);
+					makeNodes(child, currentDepth + 1, !isX);
 				}
 
 			}
@@ -207,7 +207,7 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 	}
 
 	if (_depth == 0 || isTerm) {
-		cout << "val:" << _node->state.value << ", ";
+		//cout << "val:" << _node->state.value << ", ";
 		return _node->state.value;
 	}
 
@@ -215,32 +215,36 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 		int value = INT_MIN;
 
 		for (Node* _child : _node->childs) {
-			bestNode = _child;
+			if (_child != nullptr) {
+				bestNode = _child;
+			}
 			int tempVal = ABPrune(_child, _depth - 1, alpha, beta, false);
 			value = max(value, tempVal);
 			alpha = max(alpha, value);
 			if (alpha >= beta) {
-				cout << "no bigger, ";
+				//cout << "no bigger, ";
 				break;
 			}
 		}
-		cout << "choose:" << value << endl;
+		//cout << "choose:" << value << endl;
 		return value;
 	}
 	else {
 		int value = INT_MAX;
 
 		for (Node* _child : _node->childs) {
-			bestNode = _child;
+			if (_child != nullptr) {
+				bestNode = _child;
+			}
 			int tempVal = ABPrune(_child, _depth - 1, alpha, beta, true);
 			value = min(value, tempVal);
 			beta = min(beta, value);
 			if (beta <= alpha) {
-				cout << "no smaller, ";
+				//cout << "no smaller, ";
 				break;
 			}
 		}
-		cout << "choose:" << value << endl;
+		//cout << "choose:" << value << endl;
 		return value;
 	}
 }
@@ -278,6 +282,29 @@ void PrintNodes() {
 	}
 }
 
+void tryPlace(int x, int y, bool isX) {
+	Node* tempNode = nullptr;
+	if (startNode->state.board[y][x] == NULL) {
+		for (Node* _node : startNode->childs) {
+			if (_node->state.board[y][x] == (isX ? 'X' : 'Y')) {
+				tempNode = _node;
+				break;
+			}
+		}
+
+		if (tempNode != nullptr) {
+			for (Node* _node : startNode->childs) {
+				//if (_node != tempNode) delete _node;
+			}
+			startNode = tempNode;
+			cout << endl << "Placed at " << x << ", " << y << endl;
+		}
+		else {
+			cout << endl << "Failed at " << x << ", " << y << endl;
+		}
+	}
+}
+
 int main() {
 	srand(11);
 
@@ -286,15 +313,55 @@ int main() {
 	cin >> maxDepth;
 
 	startNode = new Node();
-	startNode->state.board[0][0] = 'X';
-	makeNode(startNode, 1, false);
+	//startNode->state.board[0][0] = 'X';
+	//makeNodes(startNode, 1, true);
 
 	cout << "made nodes\n";
 	//PrintNodes();
 	cout << endl;
 	cout << endl;
 
-	ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, false);
+	while (true) {
+		//system("CLS");
+
+		makeNodes(startNode, 1, true);
+		ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, true);
+
+		if (bestNode == nullptr || bestNode == startNode) {
+			cout << endl << "cannot continue...";
+			break;
+		}
+
+		Node* currentNode = bestNode;
+		while (currentNode->parent != startNode) {
+			currentNode = currentNode->parent;
+		}
+		if (currentNode->parent == startNode) {
+			Node* tempNode = startNode;
+			startNode = currentNode;
+			//delete tempNode;
+		}
+
+		cout << endl;
+		for (int y = 0; y < 3; y++) {
+			for (int x = 0; x < 3; x++) {
+				if (startNode->state.board[y][x] == NULL) cout << ".";
+				cout << startNode->state.board[y][x];
+			}
+			cout << endl;
+		}
+
+		int x;
+		int y;
+		cout << "X and Y? ";
+		cin >> x;
+		cin >> y;
+
+		tryPlace(x, y, false);
+		
+	}
+
+	//ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, false);
 	system("pause");
 
 
@@ -304,7 +371,9 @@ int main() {
 Node::~Node()
 {
 	for (Node* _child : childs) {
-		delete _child;
+		if (_child != nullptr) {
+			delete _child;
+		}
 	}
 	delete this;
 }
