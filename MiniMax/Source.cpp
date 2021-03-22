@@ -1,21 +1,24 @@
 #include <Windows.h>
 #include <iostream>
 #include <vector>
+#include <string>
 #include <math.h>
 #include <limits> 
 
 using namespace std;
 
 struct BoardState {
-	int board[3][3] = {	0,0,0,
-						0,0,0,
-						0,0,0,};
+	char board[3][3] = {{0,0,0},
+						{0,0,0},
+						{0,0,0} };
 	int value = NULL;
 };
 
 struct Node {
 	BoardState state;
 	int level = NULL;
+	float averageBelow;
+	Node* parent = nullptr;
 	vector<Node*> childs;
 
 	~Node();
@@ -26,15 +29,19 @@ struct CGame {
 }game;
 
 Node* startNode = nullptr;
+Node* bestNode = nullptr;
 
 int maxDepth;
 
 //vector<int>toMake = { -13, -13, -14, -9, -11, -15, -6, 8, 10, 7, -15, 8, -5, 19, 9, 2, 15, -20, -12, 3, 14, 4, -6, -8, 7, -8, 4};
 vector<int>toMake = { 6, 5, 8, 7,2,1,3,4};
 
-void makeNode(Node* _parent, int currentDepth) {
+int CheckWin(Node* _parent);
+
+void makeNode(Node* _parent, int currentDepth, bool isX) {
 	_parent->level = currentDepth;
-	if (currentDepth == maxDepth) {
+	
+	/*if (currentDepth == maxDepth) {
 		bool makeRand = false;
 		if (makeRand) {
 			_parent->state.value = rand() % 10 + 1;
@@ -57,7 +64,137 @@ void makeNode(Node* _parent, int currentDepth) {
 			_parent->childs.push_back(child);
 			makeNode(child, currentDepth + 1);
 		}
+	}*/
+
+	//-1 Y win, 0 unknown, 1 X win
+	int winState = CheckWin(_parent);
+
+	bool freeSpace = false;
+
+	if (winState == 0) {
+
+		for (int y = 0; y < 3; y++) {
+			for (int x = 0; x < 3; x++) {
+
+				if (_parent->state.board[y][x] == NULL) {
+					freeSpace = true;
+
+					Node* child = new Node();
+					child->parent = _parent;
+					_parent->childs.push_back(child);
+
+					for (int _y = 0; _y < 3; _y++)
+					{
+						for (int _x = 0; _x < 3; _x++)
+						{
+							child->state.board[_y][_x] = _parent->state.board[_y][_x];
+						}
+					}
+
+					child->state.board[y][x] = (isX ? 'X' : 'Y');
+
+					makeNode(child, currentDepth + 1, !isX);
+				}
+
+			}
+		}
 	}
+
+	
+
+	if (!freeSpace || winState != 0) {
+		_parent->state.value = winState;
+	}
+}
+
+/// <summary>
+/// Checks if a node is in a winning state
+/// </summary>
+/// <param name="_parent">The node to check</param>
+/// <returns>-1 = Y wins, 0 = No Wins, 1 = X wins</returns>
+int CheckWin(Node* _parent)
+{
+	int winState = 0;
+
+	for (int y = 0; y < 3; y++) {
+		string line = "";
+		for (int x = 0; x < 3; x++) {
+			line += _parent->state.board[y][x];
+		}
+
+		if (line == "XXX") {
+			winState = 1;
+			return winState;
+		}
+		else if (line == "YYY") {
+			winState = -1;
+			return winState;
+		}
+		else {
+			winState = 0;
+		}
+	}
+
+	for (int x = 0; x < 3; x++) {
+		string line = "";
+		for (int y = 0; y < 3; y++) {
+			line += _parent->state.board[y][x];
+		}
+
+		if (line == "XXX") {
+			winState = 1;
+			return winState;
+		}
+		else if (line == "YYY") {
+			winState = -1;
+			return winState;
+		}
+		else {
+			winState = 0;
+		}
+	}
+
+	//Just seperate
+	if (true) {
+		string line = "";
+
+		for (int xy = 0; xy < 3; xy++) {
+			line += _parent->state.board[xy][xy];
+		}
+
+		if (line == "XXX") {
+			winState = 1;
+			return winState;
+		}
+		else if (line == "YYY") {
+			winState = -1;
+			return winState;
+		}
+		else {
+			winState = 0;
+		}
+	}
+
+	for (int y = 0; y < 3; y++) {
+		string line = "";
+		for (int x = 2; x >= 0; x--) {
+			line += _parent->state.board[y][x];
+		}
+
+		if (line == "XXX") {
+			winState = 1;
+			return winState;
+		}
+		else if (line == "YYY") {
+			winState = -1;
+			return winState;
+		}
+		else {
+			winState = 0;
+		}
+	}
+
+	return winState;
 }
 
 int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
@@ -78,6 +215,7 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 		int value = INT_MIN;
 
 		for (Node* _child : _node->childs) {
+			bestNode = _child;
 			int tempVal = ABPrune(_child, _depth - 1, alpha, beta, false);
 			value = max(value, tempVal);
 			alpha = max(alpha, value);
@@ -93,6 +231,7 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 		int value = INT_MAX;
 
 		for (Node* _child : _node->childs) {
+			bestNode = _child;
 			int tempVal = ABPrune(_child, _depth - 1, alpha, beta, true);
 			value = min(value, tempVal);
 			beta = min(beta, value);
@@ -113,7 +252,9 @@ void PrintNodes() {
 
 	toAdd.push_back(startNode);
 	while (!toAdd.empty()) {
-		toPrint.push_back(toAdd[0]);
+		if (toAdd[0]->state.value != 0) {
+			toPrint.push_back(toAdd[0]);
+		}
 		for (Node* _child : toAdd[0]->childs) {
 			toAdd.push_back(_child);
 		}
@@ -126,14 +267,14 @@ void PrintNodes() {
 		if (_node->level != level) {
 			cout << endl;
 			level = _node->level;
-			for (int i = 0; i < (log(toPrint.size() + 1) / log(2) - _node->level + 1); i++) {
+			/*for (int i = 0; i < (log(toPrint.size() + 1) / log(2) - _node->level + 1); i++) {
 				cout << "  ";
-			}
+			}*/
 		}
-		cout << _node->state.value;
-		for (int i = 0; i < (log(toPrint.size() + 1)/log(2) - _node->level + 1); i++) {
+		cout << _node->state.value << " ";
+		/*for (int i = 0; i < (log(toPrint.size() + 1)/log(2) - _node->level + 1); i++) {
 			cout << " ";
-		}
+		}*/
 	}
 }
 
@@ -145,14 +286,15 @@ int main() {
 	cin >> maxDepth;
 
 	startNode = new Node();
-	makeNode(startNode, 1);
+	startNode->state.board[0][0] = 'X';
+	makeNode(startNode, 1, false);
 
 	cout << "made nodes\n";
-	PrintNodes();
+	//PrintNodes();
 	cout << endl;
 	cout << endl;
 
-	ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, true);
+	ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, false);
 	system("pause");
 
 
