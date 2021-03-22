@@ -40,6 +40,10 @@ int CheckWin(Node* _parent);
 
 void makeNodes(Node* _parent, int currentDepth, bool isX) {
 	_parent->level = currentDepth;
+
+	for (Node* _child : _parent->childs) {
+		delete _child;
+	}
 	
 	/*if (currentDepth == maxDepth) {
 		bool makeRand = false;
@@ -316,7 +320,7 @@ int main() {
 	//startNode->state.board[0][0] = 'X';
 	//makeNodes(startNode, 1, true);
 
-	cout << "made nodes\n";
+	
 	//PrintNodes();
 	cout << endl;
 	cout << endl;
@@ -325,6 +329,7 @@ int main() {
 		//system("CLS");
 
 		makeNodes(startNode, 1, true);
+		cout << "made nodes\n";
 		ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, true);
 
 		if (bestNode == nullptr || bestNode == startNode) {
