@@ -4,6 +4,7 @@
 #include <string>
 #include <math.h>
 #include <limits> 
+#include <algorithm>
 
 using namespace std;
 
@@ -16,12 +17,13 @@ struct BoardState {
 
 struct Node {
 	BoardState state;
+	bool wantsToMax = true;
+	int value = NULL;
 	int level = NULL;
 	float averageBelow;
 	Node* parent = nullptr;
+	Node* bestChoice = nullptr;
 	vector<Node*> childs;
-
-	~Node();
 };
 
 struct CGame {
@@ -36,13 +38,24 @@ int maxDepth;
 //vector<int>toMake = { -13, -13, -14, -9, -11, -15, -6, 8, 10, 7, -15, 8, -5, 19, 9, 2, 15, -20, -12, 3, 14, 4, -6, -8, 7, -8, 4};
 vector<int>toMake = { 6, 5, 8, 7,2,1,3,4};
 
-int CheckWin(Node* _parent);
+int CalcScore(Node* _parent);
+
+void deleteTree(Node* _node)
+{
+	if (_node == nullptr) return;
+
+	for (Node* _child : _node->childs) {
+		deleteTree(_child);
+	}
+
+	delete _node;
+}
 
 void makeNodes(Node* _parent, int currentDepth, bool isX) {
 	_parent->level = currentDepth;
 
 	for (Node* _child : _parent->childs) {
-		delete _child;
+		deleteTree(_child);
 	}
 	
 	/*if (currentDepth == maxDepth) {
@@ -71,17 +84,15 @@ void makeNodes(Node* _parent, int currentDepth, bool isX) {
 	}*/
 
 	//-1 Y win, 0 unknown, 1 X win
-	int winState = CheckWin(_parent);
+	_parent->state.value = CalcScore(_parent);
+	_parent->value = _parent->state.value;
 
-	bool freeSpace = false;
-
-	if (winState == 0) {
+	if (_parent->state.value != -100 && _parent->state.value != 100) {
 
 		for (int y = 0; y < 3; y++) {
 			for (int x = 0; x < 3; x++) {
 
 				if (_parent->state.board[y][x] == NULL) {
-					freeSpace = true;
 
 					Node* child = new Node();
 					child->parent = _parent;
@@ -95,19 +106,13 @@ void makeNodes(Node* _parent, int currentDepth, bool isX) {
 						}
 					}
 
-					child->state.board[y][x] = (isX ? 'X' : 'Y');
+					child->state.board[y][x] = (isX ? 'X' : 'O');
 
 					makeNodes(child, currentDepth + 1, !isX);
 				}
 
 			}
 		}
-	}
-
-	
-
-	if (!freeSpace || winState != 0) {
-		_parent->state.value = winState;
 	}
 }
 
@@ -116,46 +121,33 @@ void makeNodes(Node* _parent, int currentDepth, bool isX) {
 /// </summary>
 /// <param name="_parent">The node to check</param>
 /// <returns>-1 = Y wins, 0 = No Wins, 1 = X wins</returns>
-int CheckWin(Node* _parent)
+int CalcScore(Node* _parent)
 {
 	int winState = 0;
+	vector<string> lines;
 
 	for (int y = 0; y < 3; y++) {
 		string line = "";
 		for (int x = 0; x < 3; x++) {
+			if (_parent->state.board[y][x] == NULL) continue;
 			line += _parent->state.board[y][x];
 		}
 
-		if (line == "XXX") {
-			winState = 1;
-			return winState;
-		}
-		else if (line == "YYY") {
-			winState = -1;
-			return winState;
-		}
-		else {
-			winState = 0;
-		}
+		sort(line.begin(), line.end());
+
+		lines.push_back(line);
 	}
 
 	for (int x = 0; x < 3; x++) {
 		string line = "";
 		for (int y = 0; y < 3; y++) {
+			if (_parent->state.board[y][x] == NULL) continue;
 			line += _parent->state.board[y][x];
 		}
 
-		if (line == "XXX") {
-			winState = 1;
-			return winState;
-		}
-		else if (line == "YYY") {
-			winState = -1;
-			return winState;
-		}
-		else {
-			winState = 0;
-		}
+		sort(line.begin(), line.end());
+
+		lines.push_back(line);
 	}
 
 	//Just seperate
@@ -163,45 +155,53 @@ int CheckWin(Node* _parent)
 		string line = "";
 
 		for (int xy = 0; xy < 3; xy++) {
+			if (_parent->state.board[xy][xy] == NULL) continue;
 			line += _parent->state.board[xy][xy];
 		}
 
-		if (line == "XXX") {
-			winState = 1;
-			return winState;
-		}
-		else if (line == "YYY") {
-			winState = -1;
-			return winState;
-		}
-		else {
-			winState = 0;
-		}
+		sort(line.begin(), line.end());
+
+		lines.push_back(line);
 	}
 
-	for (int y = 0; y < 3; y++) {
+	//Just seperate
+	if (true) {
 		string line = "";
-		for (int x = 2; x >= 0; x--) {
-			line += _parent->state.board[y][x];
+
+		for (int xy = 0; xy < 3; xy++) {
+			if (_parent->state.board[2-xy][xy] == NULL) continue;
+			line += _parent->state.board[2-xy][xy];
 		}
 
-		if (line == "XXX") {
-			winState = 1;
-			return winState;
-		}
-		else if (line == "YYY") {
-			winState = -1;
-			return winState;
-		}
-		else {
-			winState = 0;
-		}
+		sort(line.begin(), line.end());
+
+		lines.push_back(line);
 	}
 
-	return winState;
+	int x2 = 0;
+	int x1 = 0;
+	int o2 = 0;
+	int o1 = 0;
+
+	for (string _line : lines) {
+		if (_line == "XXX") return 100;
+		if (_line == "OOO") return -100;
+		if (_line == "XX") x2++;
+		else if (_line == "X") x1++;
+		else if (_line == "OO") o2++;
+		else if (_line == "O") o1++;
+	}
+
+	/*if (x2 == 0 && x1 == 0 && o2 == 0 && o1 == 0) {
+		return INT_MIN;
+	}*/
+
+	return (3 * x2 + x1 - (3* o2 + o1));
 }
 
 int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
+	if (isMaxi) _node->wantsToMax = true;
+	else _node->wantsToMax = false;
 	bool isTerm = true;
 	for (Node* _child : _node->childs) {
 		if (_child != nullptr) {
@@ -219,30 +219,41 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 		int value = INT_MIN;
 
 		for (Node* _child : _node->childs) {
-			if (_child != nullptr) {
+			/*if (_child != nullptr) {
 				bestNode = _child;
-			}
+			}*/
 			int tempVal = ABPrune(_child, _depth - 1, alpha, beta, false);
 			value = max(value, tempVal);
 			alpha = max(alpha, value);
+
+			if (value == tempVal) {
+				_child->parent->bestChoice = _child;
+			}
+
 			if (alpha >= beta) {
 				//cout << "no bigger, ";
 				break;
 			}
 		}
 		//cout << "choose:" << value << endl;
+		
 		return value;
 	}
 	else {
 		int value = INT_MAX;
 
 		for (Node* _child : _node->childs) {
-			if (_child != nullptr) {
+			/*if (_child != nullptr) {
 				bestNode = _child;
-			}
+			}*/
 			int tempVal = ABPrune(_child, _depth - 1, alpha, beta, true);
 			value = min(value, tempVal);
 			beta = min(beta, value);
+
+			if (value == tempVal) {
+				_child->parent->bestChoice = _child;
+			}
+
 			if (beta <= alpha) {
 				//cout << "no smaller, ";
 				break;
@@ -288,9 +299,15 @@ void PrintNodes() {
 
 void tryPlace(int x, int y, bool isX) {
 	Node* tempNode = nullptr;
+	if (startNode->childs.empty()) {
+		startNode->state.board[y][x] = (isX ? 'X' : 'O');
+		cout << endl << "Placed at " << x << ", " << y << endl;
+		return;
+	}
+
 	if (startNode->state.board[y][x] == NULL) {
 		for (Node* _node : startNode->childs) {
-			if (_node->state.board[y][x] == (isX ? 'X' : 'Y')) {
+			if (_node->state.board[y][x] == (isX ? 'X' : 'O')) {
 				tempNode = _node;
 				break;
 			}
@@ -312,6 +329,7 @@ void tryPlace(int x, int y, bool isX) {
 int main() {
 	srand(11);
 
+
 	cout <<	"Minimax Program" << endl <<
 			"Please Enter depth of tree: ";
 	cin >> maxDepth;
@@ -326,27 +344,7 @@ int main() {
 	cout << endl;
 
 	while (true) {
-		//system("CLS");
-
-		makeNodes(startNode, 1, true);
-		cout << "made nodes\n";
-		ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, true);
-
-		if (bestNode == nullptr || bestNode == startNode) {
-			cout << endl << "cannot continue...";
-			break;
-		}
-
-		Node* currentNode = bestNode;
-		while (currentNode->parent != startNode) {
-			currentNode = currentNode->parent;
-		}
-		if (currentNode->parent == startNode) {
-			Node* tempNode = startNode;
-			startNode = currentNode;
-			//delete tempNode;
-		}
-
+		system("CLS");
 		cout << endl;
 		for (int y = 0; y < 3; y++) {
 			for (int x = 0; x < 3; x++) {
@@ -356,6 +354,18 @@ int main() {
 			cout << endl;
 		}
 
+		/*if (startNode->bestChoice != nullptr) {
+			cout << endl << "Next:" << endl;
+			for (int y = 0; y < 3; y++) {
+				for (int x = 0; x < 3; x++) {
+					if (startNode->bestChoice->state.board[y][x] == NULL) cout << ".";
+					cout << startNode->bestChoice->state.board[y][x];
+				}
+				cout << endl;
+			}
+		}*/
+		
+
 		int x;
 		int y;
 		cout << "X and Y? ";
@@ -363,7 +373,26 @@ int main() {
 		cin >> y;
 
 		tryPlace(x, y, false);
-		
+
+		makeNodes(startNode, 1, true);
+		cout << "made nodes\n";
+		ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, true);
+		ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, true);
+
+		/*if (bestNode == nullptr || bestNode == startNode) {
+			cout << endl << "cannot continue...";
+			break;
+		}*/
+
+		Node* currentNode = startNode->bestChoice;
+		while (currentNode->parent != startNode) {
+			currentNode = currentNode->parent;
+		}
+		if (currentNode->parent == startNode) {
+			Node* tempNode = startNode;
+			startNode = currentNode;
+			//delete tempNode;
+		}
 	}
 
 	//ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, false);
@@ -371,14 +400,4 @@ int main() {
 
 
 	return 0;
-}
-
-Node::~Node()
-{
-	for (Node* _child : childs) {
-		if (_child != nullptr) {
-			delete _child;
-		}
-	}
-	delete this;
 }
