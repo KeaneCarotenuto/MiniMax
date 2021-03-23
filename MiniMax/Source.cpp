@@ -12,17 +12,25 @@ struct BoardState {
 	char board[3][3] = {{0,0,0},
 						{0,0,0},
 						{0,0,0} };
-	int value = NULL;
 };
 
 struct Node {
 	BoardState state;
+
 	bool wantsToMax = true;
 	int value = NULL;
 	int level = NULL;
-	float averageBelow;
+
+	//float averageBelow;
+
 	Node* parent = nullptr;
+
+	//int alpha = NULL;
+	//int beta = NULL;
+	//string reasonForBest = "";
 	Node* bestChoice = nullptr;
+	//Node* targetEnd = nullptr;
+
 	vector<Node*> childs;
 };
 
@@ -55,22 +63,22 @@ void makeNodes(Node* _parent, int currentDepth, bool isX) {
 	_parent->level = currentDepth;
 
 	for (Node* _child : _parent->childs) {
-		deleteTree(_child);
+		//deleteTree(_child);
 	}
 	
 	/*if (currentDepth == maxDepth) {
 		bool makeRand = false;
 		if (makeRand) {
-			_parent->state.value = rand() % 10 + 1;
+			_parent->value = rand() % 10 + 1;
 		}
 		else {
 			if (!toMake.empty()) {
-				_parent->state.value = toMake[0];
+				_parent->value = toMake[0];
 				toMake.erase(toMake.begin());
 			}
 			else {
 				cout << endl << "Failed to grab number from vector" << endl;
-				_parent->state.value = rand() % 10 + 1;
+				_parent->value = rand() % 10 + 1;
 			}
 			
 		}
@@ -84,10 +92,9 @@ void makeNodes(Node* _parent, int currentDepth, bool isX) {
 	}*/
 
 	//-1 Y win, 0 unknown, 1 X win
-	_parent->state.value = CalcScore(_parent);
-	_parent->value = _parent->state.value;
+	_parent->value = CalcScore(_parent);
 
-	if (_parent->state.value != -100 && _parent->state.value != 100) {
+	if (_parent->value > -100 && _parent->value < 80) {
 
 		for (int y = 0; y < 3; y++) {
 			for (int x = 0; x < 3; x++) {
@@ -184,8 +191,8 @@ int CalcScore(Node* _parent)
 	int o1 = 0;
 
 	for (string _line : lines) {
-		if (_line == "XXX") return 100;
-		if (_line == "OOO") return -100;
+		if (_line == "XXX") return 100 - _parent->level;
+		if (_line == "OOO") return -100 - _parent->level;
 		if (_line == "XX") x2++;
 		else if (_line == "X") x1++;
 		else if (_line == "OO") o2++;
@@ -211,54 +218,61 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 	}
 
 	if (_depth == 0 || isTerm) {
-		//cout << "val:" << _node->state.value << ", ";
-		return _node->state.value;
+		//cout << "val:" << _node->value << ", ";
+		//_node->targetEnd = _node;
+		return _node->value;
 	}
 
 	if (isMaxi) {
 		int value = INT_MIN;
 
 		for (Node* _child : _node->childs) {
-			/*if (_child != nullptr) {
-				bestNode = _child;
-			}*/
 			int tempVal = ABPrune(_child, _depth - 1, alpha, beta, false);
 			value = max(value, tempVal);
 			alpha = max(alpha, value);
 
+			//_node->alpha = alpha;
+			//_node->alpha = beta;
+
+
 			if (value == tempVal) {
+				//if (_child->targetEnd != nullptr) _node->targetEnd = _child->targetEnd;
 				_child->parent->bestChoice = _child;
 			}
 
-			if (alpha >= beta) {
+			if (alpha > beta) {
+				//_node->reasonForBest += "Alpha >= Beta, so prune after " + to_string(value) + (string)": ";
 				//cout << "no bigger, ";
 				break;
 			}
 		}
 		//cout << "choose:" << value << endl;
-		
+		//_node->reasonForBest += "choose " + to_string(value);
 		return value;
 	}
 	else {
 		int value = INT_MAX;
 
 		for (Node* _child : _node->childs) {
-			/*if (_child != nullptr) {
-				bestNode = _child;
-			}*/
 			int tempVal = ABPrune(_child, _depth - 1, alpha, beta, true);
 			value = min(value, tempVal);
 			beta = min(beta, value);
 
+			//_node->alpha = alpha;
+			//_node->alpha = beta;
+
 			if (value == tempVal) {
+				//if (_child->targetEnd != nullptr) _node->targetEnd = _child->targetEnd;
 				_child->parent->bestChoice = _child;
 			}
 
-			if (beta <= alpha) {
+			if (beta < alpha) {
+				//_node->reasonForBest += "Beta <= Alpha, so prune after " + to_string(value) + ": ";
 				//cout << "no smaller, ";
 				break;
 			}
 		}
+		//_node->reasonForBest += "choose " +  to_string(value);
 		//cout << "choose:" << value << endl;
 		return value;
 	}
@@ -271,7 +285,7 @@ void PrintNodes() {
 
 	toAdd.push_back(startNode);
 	while (!toAdd.empty()) {
-		if (toAdd[0]->state.value != 0) {
+		if (toAdd[0]->value != 0) {
 			toPrint.push_back(toAdd[0]);
 		}
 		for (Node* _child : toAdd[0]->childs) {
@@ -290,7 +304,7 @@ void PrintNodes() {
 				cout << "  ";
 			}*/
 		}
-		cout << _node->state.value << " ";
+		cout << _node->value << " ";
 		/*for (int i = 0; i < (log(toPrint.size() + 1)/log(2) - _node->level + 1); i++) {
 			cout << " ";
 		}*/
@@ -348,7 +362,10 @@ int main() {
 		cout << endl;
 		for (int y = 0; y < 3; y++) {
 			for (int x = 0; x < 3; x++) {
-				if (startNode->state.board[y][x] == NULL) cout << ".";
+				if (startNode->state.board[y][x] == NULL) {
+					cout << ".";
+					continue;
+				}
 				cout << startNode->state.board[y][x];
 			}
 			cout << endl;
