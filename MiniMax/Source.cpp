@@ -15,21 +15,21 @@ struct BoardState {
 };
 
 struct Node {
-	BoardState state;
-
-	bool wantsToMax = true;
 	int value = NULL;
+	BoardState state;
+	bool wantsToMax = true;
+	
 	int level = NULL;
 
 	//float averageBelow;
 
 	Node* parent = nullptr;
 
-	//int alpha = NULL;
-	//int beta = NULL;
-	//string reasonForBest = "";
+	int a = NULL;
+	int b = NULL;
+	string reasonForBest = "";
 	Node* bestChoice = nullptr;
-	//Node* targetEnd = nullptr;
+	Node* targetEnd = nullptr;
 
 	vector<Node*> childs;
 };
@@ -63,8 +63,9 @@ void makeNodes(Node* _parent, int currentDepth, bool isX) {
 	_parent->level = currentDepth;
 
 	for (Node* _child : _parent->childs) {
-		//deleteTree(_child);
+		deleteTree(_child);
 	}
+	_parent->childs.clear();
 	
 	/*if (currentDepth == maxDepth) {
 		bool makeRand = false;
@@ -219,61 +220,65 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 
 	if (_depth == 0 || isTerm) {
 		//cout << "val:" << _node->value << ", ";
-		//_node->targetEnd = _node;
+		_node->targetEnd = _node;
 		return _node->value;
 	}
 
 	if (isMaxi) {
-		int value = INT_MIN;
+		int value = -10000;
+		Node* _best = nullptr;
 
 		for (Node* _child : _node->childs) {
 			int tempVal = ABPrune(_child, _depth - 1, alpha, beta, false);
 			value = max(value, tempVal);
 			alpha = max(alpha, value);
 
-			//_node->alpha = alpha;
-			//_node->alpha = beta;
+			_node->a = alpha;
+			_node->b = beta;
 
 
 			if (value == tempVal) {
-				//if (_child->targetEnd != nullptr) _node->targetEnd = _child->targetEnd;
-				_child->parent->bestChoice = _child;
+				if (_child->targetEnd != nullptr) _node->targetEnd = _child->targetEnd;
+				_best = _child;
 			}
 
-			if (alpha > beta) {
-				//_node->reasonForBest += "Alpha >= Beta, so prune after " + to_string(value) + (string)": ";
+			if (alpha >= beta) {
+				_node->reasonForBest = "Alpha >= Beta, so prune after " + to_string(value) + (string)": ";
 				//cout << "no bigger, ";
 				break;
 			}
 		}
+		_node->reasonForBest += "choose " + to_string(value);
 		//cout << "choose:" << value << endl;
-		//_node->reasonForBest += "choose " + to_string(value);
+		_node->bestChoice = _best;
 		return value;
 	}
 	else {
-		int value = INT_MAX;
+		int value = 10000;
+		Node* _best = nullptr;
 
 		for (Node* _child : _node->childs) {
 			int tempVal = ABPrune(_child, _depth - 1, alpha, beta, true);
 			value = min(value, tempVal);
 			beta = min(beta, value);
 
-			//_node->alpha = alpha;
-			//_node->alpha = beta;
+			_node->a = alpha;
+			_node->b = beta;
 
 			if (value == tempVal) {
-				//if (_child->targetEnd != nullptr) _node->targetEnd = _child->targetEnd;
-				_child->parent->bestChoice = _child;
+				if (_child->targetEnd != nullptr) _node->targetEnd = _child->targetEnd;
+				_best = _child;
 			}
 
-			if (beta < alpha) {
-				//_node->reasonForBest += "Beta <= Alpha, so prune after " + to_string(value) + ": ";
+			if (beta <= alpha) {
+				_node->reasonForBest = "Beta <= Alpha, so prune after " + to_string(value) + ": ";
 				//cout << "no smaller, ";
 				break;
 			}
 		}
-		//_node->reasonForBest += "choose " +  to_string(value);
+		_node->reasonForBest += "choose " +  to_string(value);
 		//cout << "choose:" << value << endl;
+		_node->bestChoice = _best;
 		return value;
 	}
 }
@@ -393,8 +398,8 @@ int main() {
 
 		makeNodes(startNode, 1, true);
 		cout << "made nodes\n";
-		ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, true);
-		ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, true);
+		ABPrune(startNode, maxDepth + 1, -10000, 10000, true);
+		//ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, true);
 
 		/*if (bestNode == nullptr || bestNode == startNode) {
 			cout << endl << "cannot continue...";
