@@ -16,6 +16,7 @@ struct BoardState {
 
 struct Node {
 	int value = NULL;
+	int treeValue = NULL;
 	BoardState state;
 	bool wantsToMax = true;
 	
@@ -32,6 +33,11 @@ struct Node {
 	Node* targetEnd = nullptr;
 
 	vector<Node*> childs;
+
+	bool operator < (const Node& _other) const
+	{
+		return (value < _other.value);
+	}
 };
 
 struct CGame {
@@ -218,11 +224,19 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 		}
 	}
 
+	sort(_node->childs.begin(), _node->childs.end());
+
+	if (isMaxi) {
+		reverse(_node->childs.begin(), _node->childs.end());
+	}
+
 	if (_depth == 0 || isTerm) {
 		//cout << "val:" << _node->value << ", ";
 		_node->targetEnd = _node;
+		_node->treeValue = _node->value;
 		return _node->value;
 	}
+
 
 	if (isMaxi) {
 		int value = -10000;
@@ -251,6 +265,7 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 		_node->reasonForBest += "choose " + to_string(value);
 		//cout << "choose:" << value << endl;
 		_node->bestChoice = _best;
+		_node->treeValue = value;
 		return value;
 	}
 	else {
@@ -394,17 +409,19 @@ int main() {
 		cin >> x;
 		cin >> y;
 
-		tryPlace(x, y, false);
+		tryPlace(x, y, true);
 
-		makeNodes(startNode, 1, true);
+		makeNodes(startNode, 1, false);
 		cout << "made nodes\n";
-		ABPrune(startNode, maxDepth + 1, -10000, 10000, true);
+		ABPrune(startNode, maxDepth + 1, -10000, 10000, false);
 		//ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, true);
 
 		/*if (bestNode == nullptr || bestNode == startNode) {
 			cout << endl << "cannot continue...";
 			break;
 		}*/
+
+
 
 		Node* currentNode = startNode->bestChoice;
 		while (currentNode->parent != startNode) {
