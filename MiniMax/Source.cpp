@@ -256,11 +256,11 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 				_best = _child;
 			}
 
-			if (alpha >= beta) {
-				_node->reasonForBest = "Alpha >= Beta, so prune after " + to_string(value) + (string)": ";
-				//cout << "no bigger, ";
-				break;
-			}
+			//if (alpha >= beta) {
+			//	_node->reasonForBest = "Alpha >= Beta, so prune after " + to_string(value) + (string)": ";
+			//	//cout << "no bigger, ";
+			//	break;
+			//}
 		}
 		_node->reasonForBest += "choose " + to_string(value);
 		//cout << "choose:" << value << endl;
@@ -285,11 +285,11 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 				_best = _child;
 			}
 
-			if (beta <= alpha) {
-				_node->reasonForBest = "Beta <= Alpha, so prune after " + to_string(value) + ": ";
-				//cout << "no smaller, ";
-				break;
-			}
+			//if (beta <= alpha) {
+			//	_node->reasonForBest = "Beta <= Alpha, so prune after " + to_string(value) + ": ";
+			//	//cout << "no smaller, ";
+			//	break;
+			//}
 		}
 		_node->reasonForBest += "choose " +  to_string(value);
 		//cout << "choose:" << value << endl;
@@ -379,6 +379,29 @@ int main() {
 
 	while (true) {
 		system("CLS");
+
+		makeNodes(startNode, 1, true);
+		cout << "made nodes\n";
+		ABPrune(startNode, maxDepth + 1, -10000, 10000, true);
+		//ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, true);
+
+		/*if (bestNode == nullptr || bestNode == startNode) {
+			cout << endl << "cannot continue...";
+			break;
+		}*/
+
+
+
+		Node* currentNode = startNode->bestChoice;
+		while (currentNode->parent != startNode) {
+			currentNode = currentNode->parent;
+		}
+		if (currentNode->parent == startNode) {
+			Node* tempNode = startNode;
+			startNode = currentNode;
+			//delete tempNode;
+		}
+
 		cout << endl;
 		for (int y = 0; y < 3; y++) {
 			for (int x = 0; x < 3; x++) {
@@ -409,29 +432,9 @@ int main() {
 		cin >> x;
 		cin >> y;
 
-		tryPlace(x, y, true);
+		tryPlace(x, y, false);
 
-		makeNodes(startNode, 1, false);
-		cout << "made nodes\n";
-		ABPrune(startNode, maxDepth + 1, -10000, 10000, false);
-		//ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, true);
-
-		/*if (bestNode == nullptr || bestNode == startNode) {
-			cout << endl << "cannot continue...";
-			break;
-		}*/
-
-
-
-		Node* currentNode = startNode->bestChoice;
-		while (currentNode->parent != startNode) {
-			currentNode = currentNode->parent;
-		}
-		if (currentNode->parent == startNode) {
-			Node* tempNode = startNode;
-			startNode = currentNode;
-			//delete tempNode;
-		}
+		
 	}
 
 	//ABPrune(startNode, maxDepth + 1, INT_MIN, INT_MAX, false);
