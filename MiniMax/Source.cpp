@@ -195,6 +195,7 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 		}
 		//Return value and best choice is set
 		_node->bestChoice = _best;
+		_node->value = value;
 		return value;
 	}
 	else {
@@ -218,6 +219,7 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 		}
 		//Return value and best choice is set
 		_node->bestChoice = _best;
+		_node->value = value;
 		return value;
 	}
 }
@@ -259,12 +261,13 @@ void tryPlace(int x, int y, bool isX) {
 }
 
 bool isMade = false;
+bool pFirst = true;
 
 int main() {
 
-	cout <<	"Minimax Program" << endl /*<<
-			"Please Enter depth of tree: "*/;
-	//cin >> maxDepth;
+	cout <<	"Minimax Program" << endl <<
+			"Player First? 1=yes 0=no";
+	cin >> pFirst;
 
 	startNode = new Node();
 
@@ -272,21 +275,25 @@ int main() {
 	cout << endl;
 
 	while (true) {
+
 		system("CLS");
+
+		if (pFirst) {
+			DisplayBoard();
+
+			//Ask for user input
+			int x;
+			int y;
+			cout << "X and Y? ";
+			cin >> x;
+			cin >> y;
+
+			//try to place user input
+			tryPlace(x, y, false);
+		}
 
 		//Display the board
 		cout << endl;
-		DisplayBoard();
-
-		//Ask for user input
-		int x;
-		int y;
-		cout << "X and Y? ";
-		cin >> x;
-		cin >> y;
-
-		//try to place user input
-		tryPlace(x, y, false);
 
 		//If not already made, create the tree (doing this after use goes makes it smaller)
 		if (!isMade) {
@@ -297,14 +304,29 @@ int main() {
 
 		//Minimax + Prune
 		ABPrune(startNode, maxDepth + 1, -10000, 10000, true);
-		
-		//If best choice isnt null, set current state to best choice
-		if (startNode->bestChoice != nullptr) {
-			startNode = startNode->bestChoice;
+
+		bool hasChosen = false;
+		for (Node* _child : startNode->childs) {
+			if (_child->value == startNode->value) {
+				startNode = _child;
+				hasChosen = true;
+				break;
+			}
 		}
-		else {
-			cout << "Best Choice does not exist." << endl;
-			break;
+		if (!hasChosen) std::cout << "\nFailed\n";
+
+		if (!pFirst) {
+			DisplayBoard();
+
+			//Ask for user input
+			int x;
+			int y;
+			cout << "X and Y? ";
+			cin >> x;
+			cin >> y;
+
+			//try to place user input
+			tryPlace(x, y, false);
 		}
 	}
 	system("pause");
