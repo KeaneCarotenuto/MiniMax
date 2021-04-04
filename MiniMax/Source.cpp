@@ -1,3 +1,5 @@
+#include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <Windows.h>
 #include <iostream>
 #include <vector>
@@ -5,6 +7,7 @@
 #include <math.h>
 #include <limits> 
 #include <algorithm>
+
 
 using namespace std;
 
@@ -22,14 +25,33 @@ struct Node {
 
 	Node* parent = nullptr; 
 
-	Node* bestChoice = nullptr; //What the computer thinks is the best choice
-
 	vector<Node*> childs; //all of the possible steps
 };
 
-struct CGame {
-	
+class CGame {
+public:
+	sf::RenderWindow* wind;
+	std::vector<sf::Drawable*> toDraw;
 }game;
+
+void makeNodes(Node* _parent, int currentDepth, bool isX);
+
+int CalcScore(Node* _parent);
+
+int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi);
+
+void tryPlace(int x, int y, bool isX);
+
+void DisplayBoard();
+
+void PlayerTurn();
+
+void AITurn();
+
+void InitGame();
+
+int FixedUpdate();
+void Draw();
 
 //Store the current node of the game
 Node* startNode = nullptr;
@@ -37,9 +59,169 @@ Node* startNode = nullptr;
 //How far the program should search (set way higher than needed to be safe)
 int maxDepth = 100;
 
-int CalcScore(Node* _parent);
+bool isMade = false;
+bool pFirst = true;
 
-void DisplayBoard();
+int main() {
+
+	//Creating Different Windows
+	sf::RenderWindow window(sf::VideoMode(800, 600), "ProgramName - By Keane Carotenuto");
+	game.wind = &window;
+
+	//Manages the FixedUpdate() timing
+	float stepTime = 0;
+	bool drawn = false;
+	sf::Clock clock;
+
+	//FixedUpdate() call rate
+	float step = (1.0f / 60.0f);
+
+	InitGame();
+
+	while (window.isOpen() == true)
+	{
+		stepTime += clock.getElapsedTime().asSeconds();
+		clock.restart();
+
+		while (stepTime >= step)
+		{
+			//Main Loop of Game
+			if (FixedUpdate() == 0) return 0;
+
+			stepTime -= step;
+			drawn = false;
+		}
+
+		//Draws After Updates
+		if (drawn)
+		{
+			//sf::sleep(sf::seconds(0.01f));
+		}
+		else
+		{
+			Draw();
+
+			drawn = true;
+		}
+
+		sf::Event newEvent;
+
+		//Quit
+		while (window.pollEvent(newEvent))
+		{
+			if (newEvent.type == sf::Event::Closed)
+			{
+				window.close();
+			}
+		}
+	}
+
+	return 0;
+
+	
+
+	while (true) {
+
+		
+	}
+	system("pause");
+
+	return 0;
+}
+
+int FixedUpdate() {
+	system("CLS");
+
+	if (pFirst) {
+		PlayerTurn();
+	}
+
+	AITurn();
+
+	if (!pFirst) {
+		PlayerTurn();
+	}
+
+	return 1;
+}
+
+void Draw() {
+	game.wind->clear();
+
+	for (sf::Drawable* item : game.toDraw)
+	{
+		game.wind->draw((*item));
+	}
+
+	//Update main window
+	game.wind->display();
+}
+
+void InitGame()
+{
+	cout << "Minimax Program" << endl <<
+		"Player First? 1=yes 0=no";
+	cin >> pFirst;
+
+	startNode = new Node();
+
+	cout << endl;
+	cout << endl;
+}
+
+void AITurn()
+{
+	//If not already made, create the tree (doing this after use goes makes it smaller)
+	if (!isMade) {
+		makeNodes(startNode, 1, true);
+		isMade = true;
+		cout << "made nodes\n";
+	}
+
+	//Minimax + Prune
+	ABPrune(startNode, maxDepth + 1, -10000, 10000, true);
+
+	bool hasChosen = false;
+	for (Node* _child : startNode->childs) {
+		if (_child->value == startNode->value) {
+			startNode = _child;
+			hasChosen = true;
+			break;
+		}
+	}
+	if (!hasChosen) std::cout << "\nFailed\n";
+}
+
+void PlayerTurn()
+{
+	DisplayBoard();
+
+	//Ask for user input
+	int x;
+	int y;
+	cout << "X and Y? ";
+	cin >> x;
+	cin >> y;
+
+	//try to place user input
+	tryPlace(x, y, false);
+
+	cout << endl;
+}
+
+void DisplayBoard()
+{
+	for (int y = 0; y < 3; y++) {
+		for (int x = 0; x < 3; x++) {
+			if (startNode->state.board[y][x] == NULL) {
+				cout << ".";
+				continue;
+			}
+			cout << startNode->state.board[y][x];
+		}
+		cout << endl;
+	}
+}
 
 void makeNodes(Node* _parent, int currentDepth, bool isX) {
 	_parent->level = currentDepth;
@@ -138,8 +320,8 @@ int CalcScore(Node* _parent)
 
 		//get other diag line
 		for (int xy = 0; xy < 3; xy++) {
-			if (_parent->state.board[2-xy][xy] == NULL) continue;
-			line += _parent->state.board[2-xy][xy];
+			if (_parent->state.board[2 - xy][xy] == NULL) continue;
+			line += _parent->state.board[2 - xy][xy];
 		}
 
 		sort(line.begin(), line.end());
@@ -163,7 +345,7 @@ int CalcScore(Node* _parent)
 		else if (_line == "O") o1++;
 	}
 
-	return (3 * x2 + x1 - (3* o2 + o1));
+	return (3 * x2 + x1 - (3 * o2 + o1));
 }
 
 int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
@@ -194,7 +376,6 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 			}
 		}
 		//Return value and best choice is set
-		_node->bestChoice = _best;
 		_node->value = value;
 		return value;
 	}
@@ -218,7 +399,6 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 			}
 		}
 		//Return value and best choice is set
-		_node->bestChoice = _best;
 		_node->value = value;
 		return value;
 	}
@@ -257,93 +437,5 @@ void tryPlace(int x, int y, bool isX) {
 		else {
 			cout << endl << "Failed at " << x << ", " << y << endl;
 		}
-	}
-}
-
-bool isMade = false;
-bool pFirst = true;
-
-int main() {
-
-	cout <<	"Minimax Program" << endl <<
-			"Player First? 1=yes 0=no";
-	cin >> pFirst;
-
-	startNode = new Node();
-
-	cout << endl;
-	cout << endl;
-
-	while (true) {
-
-		system("CLS");
-
-		if (pFirst) {
-			DisplayBoard();
-
-			//Ask for user input
-			int x;
-			int y;
-			cout << "X and Y? ";
-			cin >> x;
-			cin >> y;
-
-			//try to place user input
-			tryPlace(x, y, false);
-		}
-
-		//Display the board
-		cout << endl;
-
-		//If not already made, create the tree (doing this after use goes makes it smaller)
-		if (!isMade) {
-			makeNodes(startNode, 1, true);
-			isMade = true;
-			cout << "made nodes\n";
-		}
-
-		//Minimax + Prune
-		ABPrune(startNode, maxDepth + 1, -10000, 10000, true);
-
-		bool hasChosen = false;
-		for (Node* _child : startNode->childs) {
-			if (_child->value == startNode->value) {
-				startNode = _child;
-				hasChosen = true;
-				break;
-			}
-		}
-		if (!hasChosen) std::cout << "\nFailed\n";
-
-		if (!pFirst) {
-			DisplayBoard();
-
-			//Ask for user input
-			int x;
-			int y;
-			cout << "X and Y? ";
-			cin >> x;
-			cin >> y;
-
-			//try to place user input
-			tryPlace(x, y, false);
-		}
-	}
-	system("pause");
-
-	return 0;
-}
-
-void DisplayBoard()
-{
-	for (int y = 0; y < 3; y++) {
-		for (int x = 0; x < 3; x++) {
-			if (startNode->state.board[y][x] == NULL) {
-				cout << ".";
-				continue;
-			}
-			cout << startNode->state.board[y][x];
-		}
-		cout << endl;
 	}
 }
