@@ -155,6 +155,8 @@ void Draw() {
 
 	//Update main window
 	game.wind->display();
+
+	game.toDraw.clear();
 }
 
 void InitGame()
@@ -211,6 +213,8 @@ void PlayerTurn()
 
 void DisplayBoard()
 {
+	game.wind->clear();
+
 	for (int y = 0; y < 3; y++) {
 		for (int x = 0; x < 3; x++) {
 			if (startNode->state.board[y][x] == NULL) {
@@ -218,9 +222,30 @@ void DisplayBoard()
 				continue;
 			}
 			cout << startNode->state.board[y][x];
+
+			if (startNode->state.board[y][x] == 'X') {
+				sf::RectangleShape shape;
+				shape.setPosition(x * 100, y * 100);
+				shape.setFillColor(sf::Color::White);
+				shape.setSize(sf::Vector2f(80.0f, 80.0f));
+				game.wind->draw(shape);
+			}
+			else if (startNode->state.board[y][x] == 'O') {
+				sf::CircleShape shape;
+				shape.setPosition(x * 100, y * 100);
+				shape.setFillColor(sf::Color::White);
+				shape.setRadius(80.0f / 2);
+				game.wind->draw(shape);
+			}
+			
+
+			
 		}
 		cout << endl;
 	}
+
+	//Update main window
+	game.wind->display();
 }
 
 void makeNodes(Node* _parent, int currentDepth, bool isX) {
