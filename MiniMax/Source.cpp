@@ -40,7 +40,7 @@ int CalcScore(Node* _parent);
 
 int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi);
 
-void tryPlace(int x, int y, bool isX);
+bool tryPlace(int x, int y, bool isX);
 
 void DisplayBoard();
 
@@ -132,15 +132,24 @@ int main() {
 int FixedUpdate() {
 	system("CLS");
 
-	if (pFirst) {
-		PlayerTurn();
+	if (!startNode->childs.empty() || !isMade){
+		if (pFirst) {
+			PlayerTurn();
+		}
+
+		AITurn();
+
+		if (!pFirst) {
+			PlayerTurn();
+		}
+	}
+	else {
+		system("CLS");
+		std::cout << (startNode->value > 50 ? "X" : (startNode->value < -50 ? "Y" : "No one")) << " won this round.";
+		
 	}
 
-	AITurn();
-
-	if (!pFirst) {
-		PlayerTurn();
-	}
+	
 
 	return 1;
 }
@@ -175,9 +184,20 @@ void AITurn()
 {
 	//If not already made, create the tree (doing this after use goes makes it smaller)
 	if (!isMade) {
-		makeNodes(startNode, 1, true);
+		if (!tryPlace(0, 0, true)) {
+			int x = 1;
+			int y = 1;
+			while (!tryPlace(x, y, true)) {
+				x = std::rand() % 3;
+				y = std::rand() % 3;
+			}
+		}
+
+		makeNodes(startNode, 1, false);
 		isMade = true;
 		cout << "made nodes\n";
+
+		return;
 	}
 
 	//Minimax + Prune
@@ -196,17 +216,22 @@ void AITurn()
 
 void PlayerTurn()
 {
+	system("CLS");
+
 	DisplayBoard();
 
 	//Ask for user input
-	int x;
-	int y;
-	cout << "X and Y? ";
-	cin >> x;
-	cin >> y;
+	int x = NULL;
+	int y = NULL;
+	bool isGood = false;
 
-	//try to place user input
-	tryPlace(x, y, false);
+	while (!isGood) {
+		cout << "X and Y? ";
+		cin >> x;
+		cin >> y;
+		cout << endl;
+		isGood = tryPlace(x, y, false);
+	}
 
 	cout << endl;
 }
@@ -435,14 +460,19 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 /// <param name="x"></param>
 /// <param name="y"></param>
 /// <param name="isX"></param>
-void tryPlace(int x, int y, bool isX) {
+bool tryPlace(int x, int y, bool isX) {
+	if (startNode->state.board[y][x] != NULL || x == NAN || y == NAN || x<0 || x>2 || y<0 || y>2) {
+		cout << endl << "Choose between 0 and 2 for both" << endl;
+		return false;
+	}
+
 	Node* tempNode = nullptr;
 
 	//Check if no children (player may be starting)
 	if (startNode->childs.empty()) {
 		startNode->state.board[y][x] = (isX ? 'X' : 'O');
 		cout << endl << "(No Children) Placed at " << x << ", " << y << endl;
-		return;
+		return true;
 	}
 
 	//If the chosen spot is free, search for it in children
@@ -461,6 +491,9 @@ void tryPlace(int x, int y, bool isX) {
 		}
 		else {
 			cout << endl << "Failed at " << x << ", " << y << endl;
+			return false;
 		}
 	}
+
+	return true;
 }
