@@ -53,6 +53,10 @@ void InitGame();
 int FixedUpdate();
 void Draw();
 
+void deleteTree(Node* _node);
+
+void deleteBranch(Node* _node);
+
 //Store the current node of the game
 Node* startNode = nullptr;
 
@@ -146,7 +150,10 @@ int FixedUpdate() {
 	else {
 		system("CLS");
 		std::cout << (startNode->value > 50 ? "X" : (startNode->value < -50 ? "Y" : "No one")) << " won this round.";
-		
+
+		system("pause");
+
+		InitGame();
 	}
 
 	
@@ -170,9 +177,19 @@ void Draw() {
 
 void InitGame()
 {
+	deleteTree(startNode);
+	startNode = nullptr;
+
+	isMade = false;
+
 	cout << "Minimax Program" << endl <<
 		"Player First? 1=yes 0=no";
 	cin >> pFirst;
+
+	if (pFirst != 0 && pFirst != 1) {
+		pFirst = 0;
+		cout << endl << "Incorrect answer, AI goes first..." << endl;
+	}
 
 	startNode = new Node();
 
@@ -496,4 +513,28 @@ bool tryPlace(int x, int y, bool isX) {
 	}
 
 	return true;
+}
+
+void deleteTree(Node* _node) {
+
+	if (_node == nullptr) return;
+
+	Node* currentNode = _node;
+	while (currentNode->parent != nullptr) {
+		currentNode = currentNode->parent;
+	}
+
+	deleteBranch(currentNode);
+}
+
+void deleteBranch(Node* _node)
+{
+	if (_node == nullptr) return;
+
+	for (Node* _child : _node->childs) {
+		deleteBranch(_child);
+	}
+
+	delete _node;
+	_node = nullptr;
 }
