@@ -1,3 +1,4 @@
+//Disable 
 #pragma warning( disable : 26812)
 
 #include <SFML/Graphics.hpp>
@@ -11,7 +12,6 @@
 #include <algorithm>
 
 #include "CButton.h"
-
 
 using namespace std;
 
@@ -168,7 +168,7 @@ int main() {
 	srand(time(0));
 
 	//Creating Different Windows
-	sf::RenderWindow window(sf::VideoMode(180, 180), "Tic-Tac-Toe - By Keane Carotenuto");
+	sf::RenderWindow window(sf::VideoMode(350, 350), "Tic-Tac-Toe - By Keane Carotenuto");
 	game.wind = &window;
 
 	ShowWindow(GetConsoleWindow(), SW_MINIMIZE);
@@ -183,37 +183,36 @@ int main() {
 
 	if (!game.font.loadFromFile("Roboto.ttf")) std::cout << "Failed to load Roboto\n\n";
 
-	CreateTextButton(nullptr, "Tic-Tac-Toe", 25, sf::Color::White, sf::Text::Style::Bold, 0, 0, sf::Color::Color(0, 0, 0), 5);
-	CreateTextButton(&StartGame, "Play", 25, sf::Color::White, sf::Text::Style::Bold, 0, 35, sf::Color::Color(0, 150, 0), 5);
-	CreateTextButton(nullptr, "KeaneCarotenuto", 20, sf::Color::White, sf::Text::Style::Bold, 0, 80, sf::Color::Color(0, 0, 0, 0), 5);
-	CreateTextButton(nullptr, "@gmail.com", 20, sf::Color::White, sf::Text::Style::Bold, 0, 100, sf::Color::Color(0, 0, 0, 0), 5);
-	CreateTextButton(&Quit, "Quit", 25, sf::Color::White, sf::Text::Style::Bold, 0, 150, sf::Color::Color(150, 0, 0), 5);
-
-	CreateTextButton(nullptr, "Choose Mode", 20, sf::Color::White, sf::Text::Style::Bold, 0, 0, sf::Color::Color(0, 0, 0), 5, false);
-	CreateTextButton(&ChoosePVP, "PVP", 25, sf::Color::White, sf::Text::Style::Bold, 0, 35, sf::Color::Color(150, 150, 0), 5, false);
-	CreateTextButton(&ChoosePVAI, "PVAI", 25, sf::Color::White, sf::Text::Style::Bold, 0, 70, sf::Color::Color(0, 150, 150), 5, false);
-
-	CreateTextButton(nullptr, "Choose Starting", 20, sf::Color::White, sf::Text::Style::Bold, 0, 0, sf::Color::Color(0, 0, 0), 5, false);
-	CreateTextButton(&ChooseAI, "AI", 25, sf::Color::White, sf::Text::Style::Bold, 0, 35, sf::Color::Color(150, 150, 0), 5, false);
-	CreateTextButton(&ChooseYou, "You", 25, sf::Color::White, sf::Text::Style::Bold, 0, 70, sf::Color::Color(0, 150, 0), 5, false);
-
-	CreateTextButton(nullptr, "Choose Difficulty", 20, sf::Color::White, sf::Text::Style::Bold, 0, 0, sf::Color::Color(0, 0, 0), 5, false);
-	CreateTextButton(&ChooseEasy, "Easy", 25, sf::Color::White, sf::Text::Style::Bold, 0, 35, sf::Color::Color(0, 150, 0), 5, false);
-	CreateTextButton(&ChooseHard, "Hard", 25, sf::Color::White, sf::Text::Style::Bold, 0, 70, sf::Color::Color(150, 0, 0), 5, false);
-
-	CreateTextButton(nullptr, "Winner", 25, sf::Color::White, sf::Text::Style::Bold, 0, 0, sf::Color::Color(0, 0, 0), 5, false);
-	CreateTextButton(&Menu, "Menu", 25, sf::Color::White, sf::Text::Style::Bold, 0, 35, sf::Color::Color(0, 150, 0), 5, false);
-	
-
 	for (int y = 0; y < 3; y++) {
 		for (int x = 0; x < 3; x++) {
-			
-			CreateTile(x, y, to_string(x) + to_string(y), 25, sf::Color::White, sf::Text::Style::Bold, x * 60, y * 60, x * 60 + 55, y * 60 + 55, sf::Color::White, true);
+
+			CreateTile(x, y, to_string(x) + to_string(y), 50, sf::Color::White, sf::Text::Style::Bold, x * 120, y * 120, x * 120 + 110, y * 120 + 110, sf::Color::White, true);
 			game.buttomMap.find(to_string(x) + to_string(y))->second->text->setString("");
 		}
 	}
 
-	CreateTextButton(nullptr, "Wait", 25, sf::Color::White, sf::Text::Style::Bold, 0, 75, sf::Color::Color(150, 0, 0), 5, false);
+	CreateTextButton(nullptr, "Tic-Tac-Toe", 50, sf::Color::White, sf::Text::Style::Bold, 0, 0, sf::Color::Color(0, 0, 0), 5);
+	CreateTextButton(&StartGame, "Play", 50, sf::Color::White, sf::Text::Style::Bold, 0, 70, sf::Color::Color(0, 150, 0), 5);
+	CreateTextButton(nullptr, "KeaneCarotenuto", 40, sf::Color::White, sf::Text::Style::Bold, 0, 160, sf::Color::Color(0, 0, 0, 0), 5);
+	CreateTextButton(nullptr, "@gmail.com", 40, sf::Color::White, sf::Text::Style::Bold, 0, 200, sf::Color::Color(0, 0, 0, 0), 5);
+	CreateTextButton(&Quit, "Quit", 50, sf::Color::White, sf::Text::Style::Bold, 0, 290, sf::Color::Color(150, 0, 0), 5);
+
+	CreateTextButton(nullptr, "Choose Mode", 40, sf::Color::White, sf::Text::Style::Bold, 0, 0, sf::Color::Color(0, 0, 0), 5, false);
+	CreateTextButton(&ChoosePVP, "PVP", 50, sf::Color::White, sf::Text::Style::Bold, 0, 70, sf::Color::Color(150, 150, 0), 5, false);
+	CreateTextButton(&ChoosePVAI, "PVAI", 50, sf::Color::White, sf::Text::Style::Bold, 0, 140, sf::Color::Color(0, 150, 150), 5, false);
+
+	CreateTextButton(nullptr, "Choose Starting", 40, sf::Color::White, sf::Text::Style::Bold, 0, 0, sf::Color::Color(0, 0, 0), 5, false);
+	CreateTextButton(&ChooseAI, "AI", 50, sf::Color::White, sf::Text::Style::Bold, 0, 70, sf::Color::Color(150, 150, 0), 5, false);
+	CreateTextButton(&ChooseYou, "You", 50, sf::Color::White, sf::Text::Style::Bold, 0, 140, sf::Color::Color(0, 150, 0), 5, false);
+
+	CreateTextButton(nullptr, "Choose Difficulty", 40, sf::Color::White, sf::Text::Style::Bold, 0, 0, sf::Color::Color(0, 0, 0), 5, false);
+	CreateTextButton(&ChooseEasy, "Easy", 50, sf::Color::White, sf::Text::Style::Bold, 0, 70, sf::Color::Color(0, 150, 0), 5, false);
+	CreateTextButton(&ChooseHard, "Hard", 50, sf::Color::White, sf::Text::Style::Bold, 0, 140, sf::Color::Color(150, 0, 0), 5, false);
+
+	CreateTextButton(nullptr, "Winner", 50, sf::Color::White, sf::Text::Style::Bold, 0, 100, sf::Color::Color(0, 0, 0), 5, false);
+	CreateTextButton(&Menu, "Menu", 50, sf::Color::White, sf::Text::Style::Bold, 0, 180, sf::Color::Color(0, 150, 0, 200), 5, false);
+
+	CreateTextButton(nullptr, "Wait", 50, sf::Color::White, sf::Text::Style::Bold, 0, 75, sf::Color::Color(150, 0, 0), 5, false);
 
 	while (window.isOpen() == true)
 	{
@@ -325,30 +324,26 @@ int FixedUpdate() {
 			game.state = CGame::GameStates::Player1Turn;
 		}
 		else {
-
+			UpdateBoard();
 			EndGame((game.startNode->value > 50 ? "X" : (game.startNode->value < -50 ? "O" : " ")));
 		}
 		break;
 
 	case CGame::GameStates::Player1Turn:
-
-		if (!game.startNode->childs.empty() || !game.isMade) {
-			UpdateBoard();
-		}
-		else {
-
+		UpdateBoard();
+		if (game.startNode->childs.empty() && game.isMade) {
 			EndGame((game.startNode->value > 50 ? "X" : (game.startNode->value < -50 ? "O" : " ")));
 		}
 		break;
 
 	case CGame::GameStates::Player2Turn:
-		if (!game.startNode->childs.empty() || !game.isMade) {
-			UpdateBoard();
-		}
-		else {
-
+		UpdateBoard();
+		if (game.startNode->childs.empty() && game.isMade) {
 			EndGame((game.startNode->value > 50 ? "X" : (game.startNode->value < -50 ? "O" : " ")));
 		}
+		break;
+
+	case CGame::GameStates::EndScreen:
 		break;
 
 	case CGame::GameStates::Quit:
@@ -365,7 +360,7 @@ int FixedUpdate() {
 void EndGame(string winner)
 {
 	game.state = CGame::GameStates::EndScreen;
-	DisableAllButtons();
+	//DisableAllButtons();
 	game.buttomMap.find("Winner")->second->isEnabled = true;
 
 	string toWrite = "e";
@@ -381,11 +376,15 @@ void EndGame(string winner)
 	}
 
 	game.buttomMap.find("Winner")->second->text->setString(toWrite);
-	game.buttomMap.find("Winner")->second->rect->setFillColor(winner == "X" ? sf::Color::Color(150,0,0) : winner == "O" ? sf::Color::Color(0, 0, 150) : sf::Color::Transparent);
+	game.buttomMap.find("Winner")->second->rect->setFillColor(winner == "X" ? sf::Color::Color(100,0,0,200) : winner == "O" ? sf::Color::Color(0, 0, 100, 200) : sf::Color::Color(0,0,0,200));
+	game.buttomMap.find("Winner")->second->rect->setOutlineColor(sf::Color::Black);
+	game.buttomMap.find("Winner")->second->rect->setOutlineThickness(2.0f);
 	game.buttomMap.find("Winner")->second->text->setOrigin((game.buttomMap.find("Winner")->second->text->getGlobalBounds().width) / 2, 0);
 	game.buttomMap.find("Winner")->second->text->setPosition(game.wind->getSize().x / 2, game.buttomMap.find("Winner")->second->text->getPosition().y);
 
 	game.buttomMap.find("Menu")->second->isEnabled = true;
+	game.buttomMap.find("Menu")->second->rect->setOutlineColor(sf::Color::Black);
+	game.buttomMap.find("Menu")->second->rect->setOutlineThickness(2.0f);
 }
 
 void Draw() {
@@ -409,7 +408,7 @@ void Draw() {
 
 	game.toDraw.clear();
 
-	if (game.wind->getSize() != sf::Vector2u(180, 180)) game.wind->setSize(sf::Vector2u(180, 180));
+	if (game.wind->getSize() != sf::Vector2u(350, 350)) game.wind->setSize(sf::Vector2u(350, 350));
 }
 
 void InitGame()
@@ -750,7 +749,6 @@ void deleteBranch(Node* _node)
 	_node = nullptr;
 }
 
-
 void DisableAllButtons()
 {
 	for (CButton* _button : game.buttons)
@@ -790,25 +788,26 @@ void CheckButtonsPressed()
 							_button->function();
 							break;
 						}
-						if (_button->isTicTacTile) {
+						if (_button->isTicTacTile && game.state != CGame::GameStates::EndScreen) {
 							if (game.pvp) {
 								if (game.state == CGame::GameStates::Player1Turn) {
-									tryPlace(_button->tictacX, _button->tictacY, false);
-									if (!game.isMade) makeNodes(game.startNode, 1, true);
-									game.state = CGame::GameStates::Player2Turn;
+									if (tryPlace(_button->tictacX, _button->tictacY, false)) {
+										if (!game.isMade) makeNodes(game.startNode, 1, true);
+										game.state = CGame::GameStates::Player2Turn;
+									}
 								}
 								else {
-									tryPlace(_button->tictacX, _button->tictacY, true);
-									if (!game.isMade) makeNodes(game.startNode, 1, true);
-									game.state = CGame::GameStates::Player1Turn;
+									if (tryPlace(_button->tictacX, _button->tictacY, true)) {
+										if (!game.isMade) makeNodes(game.startNode, 1, true);
+										game.state = CGame::GameStates::Player1Turn;
+									}
 								}
 							}
 							else {
-								tryPlace(_button->tictacX, _button->tictacY, false);
-								game.state = CGame::GameStates::AITurn;
+								if (tryPlace(_button->tictacX, _button->tictacY, false)) {
+									game.state = CGame::GameStates::AITurn;
+								}
 							}
-							
-							break;
 						}
 					}
 				}
@@ -840,8 +839,8 @@ void CreateTextButton(void(*function)(), std::string _string, int _fontSize, sf:
 
 	//Button rect
 	sf::RectangleShape* buttonRect = new sf::RectangleShape;
-	buttonRect->setPosition(0, tempText->getGlobalBounds().top - _padding);
-	buttonRect->setSize(sf::Vector2f(180, 30));
+	buttonRect->setPosition(0, tempText->getGlobalBounds().top - _padding - 5);
+	buttonRect->setSize(sf::Vector2f(350, 60));
 	buttonRect->setFillColor(_bgColour);
 
 	//create
