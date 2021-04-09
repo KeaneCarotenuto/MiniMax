@@ -13,5 +13,9 @@ public:
 	void(*function)();
 
 	bool isEnabled = true;
+
+	bool isTicTacTile = false;
+	int tictacX = 0;
+	int tictacY = 0;
 };
 

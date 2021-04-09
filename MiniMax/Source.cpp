@@ -1,3 +1,5 @@
+#pragma warning( disable : 26812)
+
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <Windows.h>
@@ -32,7 +34,7 @@ struct Node {
 
 class CGame {
 public:
-	sf::RenderWindow* wind;
+	sf::RenderWindow* wind = nullptr;
 	std::vector<sf::Drawable*> toDraw;
 
 	enum class GameStates {
@@ -45,6 +47,7 @@ public:
 		Player1Turn,
 		Player2Turn,
 		EndScreen,
+		Quit,
 	};
 
 	bool pvp = false;
@@ -81,53 +84,94 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi);
 
 bool tryPlace(int x, int y, bool isX);
 
-void DisplayBoard();
-
-void PlayerTurn();
+void UpdateBoard();
 
 void AITurn();
 
 void InitGame();
 
 int FixedUpdate();
+
+void EndGame(string winner);
+
+void EnableGridButtons();
+
 void Draw();
 
 void deleteTree(Node* _node);
 
 void deleteBranch(Node* _node);
 
+void DisableAllButtons();
+
 void CheckButtonsPressed();
 
 void CreateTextButton(void(*function)(), std::string _string, int _fontSize, sf::Color _tColour, sf::Text::Style _style, float _x, float _y, sf::Color _bgColour, float _padding, bool _isE = true);
 
-void CreateClickable(void(*function)(), std::string _string, int _fontSize, sf::Color _tColour, sf::Text::Style _style, float tl_x, float tl_y, float br_x, float br_y, sf::Color _bgColour, bool _isE);
+void CreateTile(int col, int row, std::string _string, int _fontSize, sf::Color _tColour, sf::Text::Style _style, float tl_x, float tl_y, float br_x, float br_y, sf::Color _bgColour, bool _isE);
 
 
 void StartGame() {
-	cout << "Yep\n";
-	game.state = CGame::GameStates::ChooseFirstAI;
+	game.state = CGame::GameStates::ChooseMode;
+
+	DisableAllButtons();
+
 	InitGame();
 }
 
+void Quit() {
+	game.state = CGame::GameStates::Quit;
+
+	DisableAllButtons();
+}
+
+void ChoosePVP() {
+	DisableAllButtons();
+	EnableGridButtons();
+	game.pvp = true;
+	game.state = CGame::GameStates::Player1Turn;
+}
+
+void ChoosePVAI() {
+	game.state = CGame::GameStates::ChooseDifficulty;
+}
+
+void ChooseEasy() {
+	game.hardAI = false;
+	game.state = CGame::GameStates::ChooseFirstAI;
+}
+
+void ChooseHard() {
+	game.hardAI = true;
+	game.state = CGame::GameStates::ChooseFirstAI;
+}
+
 void ChooseAI() {
+	DisableAllButtons();
+	EnableGridButtons();
 	game.pFirst = false;
 	game.state = CGame::GameStates::AITurn;
 }
 
 void ChooseYou() {
+	DisableAllButtons();
+	EnableGridButtons();
 	game.pFirst = true;
-	game.state = CGame::GameStates::AITurn;
+	game.state = CGame::GameStates::Player1Turn;
 }
 
-void TestButton() {
-	cout << "\nWorks\n";
+void Menu() {
+	game.state = CGame::GameStates::Menu;
 }
 
 int main() {
+	srand(time(0));
 
 	//Creating Different Windows
-	sf::RenderWindow window(sf::VideoMode(800, 600), "ProgramName - By Keane Carotenuto");
+	sf::RenderWindow window(sf::VideoMode(180, 180), "Tic-Tac-Toe - By Keane Carotenuto");
 	game.wind = &window;
+
+	ShowWindow(GetConsoleWindow(), SW_MINIMIZE);
 
 	//Manages the FixedUpdate() timing
 	float stepTime = 0;
@@ -139,19 +183,37 @@ int main() {
 
 	if (!game.font.loadFromFile("Roboto.ttf")) std::cout << "Failed to load Roboto\n\n";
 
-	/*InitGame();*/
+	CreateTextButton(nullptr, "Tic-Tac-Toe", 25, sf::Color::White, sf::Text::Style::Bold, 0, 0, sf::Color::Color(0, 0, 0), 5);
+	CreateTextButton(&StartGame, "Play", 25, sf::Color::White, sf::Text::Style::Bold, 0, 35, sf::Color::Color(0, 150, 0), 5);
+	CreateTextButton(nullptr, "KeaneCarotenuto", 20, sf::Color::White, sf::Text::Style::Bold, 0, 80, sf::Color::Color(0, 0, 0, 0), 5);
+	CreateTextButton(nullptr, "@gmail.com", 20, sf::Color::White, sf::Text::Style::Bold, 0, 100, sf::Color::Color(0, 0, 0, 0), 5);
+	CreateTextButton(&Quit, "Quit", 25, sf::Color::White, sf::Text::Style::Bold, 0, 150, sf::Color::Color(150, 0, 0), 5);
 
-	CreateTextButton(&StartGame, "Play", 25, sf::Color::White, sf::Text::Style::Bold, 0, 0, sf::Color::Color(0, 150, 0), 5);
-	CreateTextButton(&ChooseAI, "AI", 25, sf::Color::White, sf::Text::Style::Bold, 0, 0, sf::Color::Color(0, 150, 0), 5, false);
-	CreateTextButton(&ChooseYou, "You", 25, sf::Color::White, sf::Text::Style::Bold, 0, 30, sf::Color::Color(0, 150, 0), 5, false);
+	CreateTextButton(nullptr, "Choose Mode", 20, sf::Color::White, sf::Text::Style::Bold, 0, 0, sf::Color::Color(0, 0, 0), 5, false);
+	CreateTextButton(&ChoosePVP, "PVP", 25, sf::Color::White, sf::Text::Style::Bold, 0, 35, sf::Color::Color(150, 150, 0), 5, false);
+	CreateTextButton(&ChoosePVAI, "PVAI", 25, sf::Color::White, sf::Text::Style::Bold, 0, 70, sf::Color::Color(0, 150, 150), 5, false);
+
+	CreateTextButton(nullptr, "Choose Starting", 20, sf::Color::White, sf::Text::Style::Bold, 0, 0, sf::Color::Color(0, 0, 0), 5, false);
+	CreateTextButton(&ChooseAI, "AI", 25, sf::Color::White, sf::Text::Style::Bold, 0, 35, sf::Color::Color(150, 150, 0), 5, false);
+	CreateTextButton(&ChooseYou, "You", 25, sf::Color::White, sf::Text::Style::Bold, 0, 70, sf::Color::Color(0, 150, 0), 5, false);
+
+	CreateTextButton(nullptr, "Choose Difficulty", 20, sf::Color::White, sf::Text::Style::Bold, 0, 0, sf::Color::Color(0, 0, 0), 5, false);
+	CreateTextButton(&ChooseEasy, "Easy", 25, sf::Color::White, sf::Text::Style::Bold, 0, 35, sf::Color::Color(0, 150, 0), 5, false);
+	CreateTextButton(&ChooseHard, "Hard", 25, sf::Color::White, sf::Text::Style::Bold, 0, 70, sf::Color::Color(150, 0, 0), 5, false);
+
+	CreateTextButton(nullptr, "Winner", 25, sf::Color::White, sf::Text::Style::Bold, 0, 0, sf::Color::Color(0, 0, 0), 5, false);
+	CreateTextButton(&Menu, "Menu", 25, sf::Color::White, sf::Text::Style::Bold, 0, 35, sf::Color::Color(0, 150, 0), 5, false);
+	
 
 	for (int y = 0; y < 3; y++) {
 		for (int x = 0; x < 3; x++) {
-			CreateClickable(&TestButton, to_string(10*y + x), 25, sf::Color::White, sf::Text::Style::Bold, x * 50 + 200, y * 50 + 200, (x + 1) * 50 + 200, (y + 1) * 50 + 200, sf::Color::Color(0, 150, 0), true);
+			
+			CreateTile(x, y, to_string(x) + to_string(y), 25, sf::Color::White, sf::Text::Style::Bold, x * 60, y * 60, x * 60 + 55, y * 60 + 55, sf::Color::White, true);
+			game.buttomMap.find(to_string(x) + to_string(y))->second->text->setString("");
 		}
 	}
-	
 
+	CreateTextButton(nullptr, "Wait", 25, sf::Color::White, sf::Text::Style::Bold, 0, 75, sf::Color::Color(150, 0, 0), 5, false);
 
 	while (window.isOpen() == true)
 	{
@@ -216,21 +278,37 @@ int FixedUpdate() {
 		game.isMade = false;
 		game.startNode = new Node();
 
+		UpdateBoard();
 
+		DisableAllButtons();
+		game.buttomMap.find("Tic-Tac-Toe")->second->isEnabled = true;
+		game.buttomMap.find("KeaneCarotenuto")->second->isEnabled = true;
+		game.buttomMap.find("@gmail.com")->second->isEnabled = true;
 		game.buttomMap.find("Play")->second->isEnabled = true;
-		game.buttomMap.find("AI")->second->isEnabled = false;
-		game.buttomMap.find("You")->second->isEnabled = false;
+		game.buttomMap.find("Quit")->second->isEnabled = true;
 		break;
 
 	case CGame::GameStates::ChooseMode:
+		DisableAllButtons();
+
+		game.buttomMap.find("Choose Mode")->second->isEnabled = true;
+		game.buttomMap.find("PVP")->second->isEnabled = true;
+		game.buttomMap.find("PVAI")->second->isEnabled = true;
 
 		break;
 
 	case CGame::GameStates::ChooseDifficulty:
+		DisableAllButtons();
+
+		game.buttomMap.find("Choose Difficulty")->second->isEnabled = true;
+		game.buttomMap.find("Easy")->second->isEnabled = true;
+		game.buttomMap.find("Hard")->second->isEnabled = true;
 		break;
 
 	case CGame::GameStates::ChooseFirstAI:
-		game.buttomMap.find("Play")->second->isEnabled = false;
+		DisableAllButtons();
+
+		game.buttomMap.find("Choose Starting")->second->isEnabled = true;
 		game.buttomMap.find("AI")->second->isEnabled = true;
 		game.buttomMap.find("You")->second->isEnabled = true;
 		break;
@@ -240,66 +318,74 @@ int FixedUpdate() {
 		break;
 
 	case CGame::GameStates::AITurn:
-		system("CLS");
 
 		if (!game.startNode->childs.empty() || !game.isMade) {
-			if (game.pFirst) {
-				PlayerTurn();
-			}
-
 			AITurn();
 
-			if (!game.pFirst) {
-				PlayerTurn();
-			}
+			game.state = CGame::GameStates::Player1Turn;
 		}
 		else {
-			system("CLS");
-			std::cout << (game.startNode->value > 50 ? "X" : (game.startNode->value < -50 ? "Y" : "No one")) << " won this round.";
 
-			system("pause");
-
-			game.state = CGame::GameStates::Menu;
+			EndGame((game.startNode->value > 50 ? "X" : (game.startNode->value < -50 ? "O" : " ")));
 		}
 		break;
 
 	case CGame::GameStates::Player1Turn:
+
+		if (!game.startNode->childs.empty() || !game.isMade) {
+			UpdateBoard();
+		}
+		else {
+
+			EndGame((game.startNode->value > 50 ? "X" : (game.startNode->value < -50 ? "O" : " ")));
+		}
 		break;
 
 	case CGame::GameStates::Player2Turn:
+		if (!game.startNode->childs.empty() || !game.isMade) {
+			UpdateBoard();
+		}
+		else {
 
+			EndGame((game.startNode->value > 50 ? "X" : (game.startNode->value < -50 ? "O" : " ")));
+		}
+		break;
+
+	case CGame::GameStates::Quit:
+		return 0;
 		break;
 
 	default:
 		break;
 	}
 
+	return 1;
+}
 
-	/*system("CLS");
+void EndGame(string winner)
+{
+	game.state = CGame::GameStates::EndScreen;
+	DisableAllButtons();
+	game.buttomMap.find("Winner")->second->isEnabled = true;
 
-	if (!game.startNode->childs.empty() || !game.isMade){
-		if (game.pFirst) {
-			PlayerTurn();
-		}
-
-		AITurn();
-
-		if (!game.pFirst) {
-			PlayerTurn();
-		}
+	string toWrite = "e";
+	if (game.pvp) {
+		if (winner == " ") toWrite = "Tie!";
+		if (winner == "X") toWrite = "X Won!";
+		if (winner == "O") toWrite = "O Won!";
 	}
 	else {
-		system("CLS");
-		std::cout << (game.startNode->value > 50 ? "X" : (game.startNode->value < -50 ? "Y" : "No one")) << " won this round.";
+		if (winner == " ") toWrite = "Tie!";
+		if (winner == "X") toWrite = "CPU Won!";
+		if (winner == "O") toWrite = "You Won!";
+	}
 
-		system("pause");
+	game.buttomMap.find("Winner")->second->text->setString(toWrite);
+	game.buttomMap.find("Winner")->second->rect->setFillColor(winner == "X" ? sf::Color::Color(150,0,0) : winner == "O" ? sf::Color::Color(0, 0, 150) : sf::Color::Transparent);
+	game.buttomMap.find("Winner")->second->text->setOrigin((game.buttomMap.find("Winner")->second->text->getGlobalBounds().width) / 2, 0);
+	game.buttomMap.find("Winner")->second->text->setPosition(game.wind->getSize().x / 2, game.buttomMap.find("Winner")->second->text->getPosition().y);
 
-		InitGame();
-	}*/
-
-	
-
-	return 1;
+	game.buttomMap.find("Menu")->second->isEnabled = true;
 }
 
 void Draw() {
@@ -322,6 +408,8 @@ void Draw() {
 	game.wind->display();
 
 	game.toDraw.clear();
+
+	if (game.wind->getSize() != sf::Vector2u(180, 180)) game.wind->setSize(sf::Vector2u(180, 180));
 }
 
 void InitGame()
@@ -331,19 +419,17 @@ void InitGame()
 
 	game.isMade = false;
 
-	/*cout << "Minimax Program" << endl <<
-		"Player First? 1=yes 0=no";
-	cin >> game.pFirst;
+	game.pvp = false;
 
-	if (game.pFirst != 0 && game.pFirst != 1) {
-		game.pFirst = 0;
-		cout << endl << "Incorrect answer, AI goes first..." << endl;
-	}*/
+	game.hardAI = false;
 
 	game.startNode = new Node();
 
-	cout << endl;
-	cout << endl;
+	for (CButton* _button : game.buttons) {
+		if (_button->isTicTacTile) {
+			_button->rect->setFillColor(sf::Color::White);
+		}
+	}
 }
 
 void AITurn()
@@ -359,87 +445,67 @@ void AITurn()
 			}
 		}
 
+		game.buttomMap.find("Wait")->second->isEnabled = true;
+
+		UpdateBoard();
+		Draw();
+
 		makeNodes(game.startNode, 1, false);
-		game.isMade = true;
-		cout << "made nodes\n";
+
+		game.buttomMap.find("Wait")->second->isEnabled = false;
 
 		return;
 	}
 
-	//Minimax + Prune
-	ABPrune(game.startNode, game.maxDepth + 1, -10000, 10000, true);
+	if (game.hardAI) {
+		//Minimax + Prune
+		ABPrune(game.startNode, game.maxDepth + 1, -10000, 10000, true);
 
-	bool hasChosen = false;
-	for (Node* _child : game.startNode->childs) {
-		if (_child->value == game.startNode->value) {
-			game.startNode = _child;
-			hasChosen = true;
-			break;
+		bool hasChosen = false;
+		for (Node* _child : game.startNode->childs) {
+			if (_child->value == game.startNode->value) {
+				game.startNode = _child;
+				hasChosen = true;
+				break;
+			}
 		}
 	}
-	if (!hasChosen) std::cout << "\nFailed\n";
-}
-
-void PlayerTurn()
-{
-	system("CLS");
-
-	DisplayBoard();
-
-	//Ask for user input
-	int x = NULL;
-	int y = NULL;
-	bool isGood = false;
-
-	while (!isGood) {
-		cout << "X and Y? ";
-		cin >> x;
-		cin >> y;
-		cout << endl;
-		isGood = tryPlace(x, y, false);
+	else {
+		while (!tryPlace(rand() % 3, rand() % 3, true));
 	}
+	
 
-	cout << endl;
+	
 }
 
-void DisplayBoard()
+void UpdateBoard()
 {
-	game.wind->clear();
+	//game.wind->clear();
 
 	for (int y = 0; y < 3; y++) {
 		for (int x = 0; x < 3; x++) {
 			if (game.startNode->state.board[y][x] == NULL) {
-				cout << ".";
+				game.buttomMap.find(to_string(x) + to_string(y))->second->text->setString("");
 				continue;
 			}
-			cout << game.startNode->state.board[y][x];
 
 			if (game.startNode->state.board[y][x] == 'X') {
-				sf::RectangleShape shape;
-				shape.setPosition(x * 100, y * 100);
-				shape.setFillColor(sf::Color::White);
-				shape.setSize(sf::Vector2f(80.0f, 80.0f));
-				game.wind->draw(shape);
+				game.buttomMap.find(to_string(x) + to_string(y))->second->text->setString("X");
+				game.buttomMap.find(to_string(x) + to_string(y))->second->rect->setFillColor(sf::Color::Color(150, 0, 0));
 			}
 			else if (game.startNode->state.board[y][x] == 'O') {
-				sf::CircleShape shape;
-				shape.setPosition(x * 100, y * 100);
-				shape.setFillColor(sf::Color::White);
-				shape.setRadius(80.0f / 2);
-				game.wind->draw(shape);
+				game.buttomMap.find(to_string(x) + to_string(y))->second->text->setString("O");
+				game.buttomMap.find(to_string(x) + to_string(y))->second->rect->setFillColor(sf::Color::Color(0, 0, 150));
 			}
 			
 
 			
 		}
-		cout << endl;
 	}
-
-	//Update main window
-	game.wind->display();
 }
 
 void makeNodes(Node* _parent, int currentDepth, bool isX) {
+	game.isMade = true;
 	_parent->level = currentDepth;
 
 	//Calculate value of current node
@@ -628,7 +694,6 @@ int ABPrune(Node* _node, int _depth, int alpha, int beta, bool isMaxi) {
 /// <param name="isX"></param>
 bool tryPlace(int x, int y, bool isX) {
 	if (game.startNode->state.board[y][x] != NULL || x == NAN || y == NAN || x<0 || x>2 || y<0 || y>2) {
-		cout << endl << "Choose between 0 and 2 for both" << endl;
 		return false;
 	}
 
@@ -637,7 +702,6 @@ bool tryPlace(int x, int y, bool isX) {
 	//Check if no children (player may be starting)
 	if (game.startNode->childs.empty()) {
 		game.startNode->state.board[y][x] = (isX ? 'X' : 'O');
-		cout << endl << "(No Children) Placed at " << x << ", " << y << endl;
 		return true;
 	}
 
@@ -653,10 +717,8 @@ bool tryPlace(int x, int y, bool isX) {
 		//If the child exists, set that as the new board state
 		if (tempNode != nullptr) {
 			game.startNode = tempNode;
-			cout << endl << "Placed at " << x << ", " << y << endl;
 		}
 		else {
-			cout << endl << "Failed at " << x << ", " << y << endl;
 			return false;
 		}
 	}
@@ -688,6 +750,28 @@ void deleteBranch(Node* _node)
 	_node = nullptr;
 }
 
+
+void DisableAllButtons()
+{
+	for (CButton* _button : game.buttons)
+	{
+		_button->isEnabled = false;
+	}
+}
+
+void EnableGridButtons()
+{
+	game.buttomMap.find("00")->second->isEnabled = true;
+	game.buttomMap.find("01")->second->isEnabled = true;
+	game.buttomMap.find("02")->second->isEnabled = true;
+	game.buttomMap.find("10")->second->isEnabled = true;
+	game.buttomMap.find("11")->second->isEnabled = true;
+	game.buttomMap.find("12")->second->isEnabled = true;
+	game.buttomMap.find("20")->second->isEnabled = true;
+	game.buttomMap.find("21")->second->isEnabled = true;
+	game.buttomMap.find("22")->second->isEnabled = true;
+}
+
 void CheckButtonsPressed()
 {
 	//Check Mouse lick
@@ -702,7 +786,30 @@ void CheckButtonsPressed()
 				if (_button->isEnabled) {
 					//If click, do func
 					if (_button->rect->getGlobalBounds().contains((sf::Vector2f)sf::Mouse::getPosition(*game.wind))) {
-						if (_button->function != nullptr) _button->function();
+						if (_button->function != nullptr) {
+							_button->function();
+							break;
+						}
+						if (_button->isTicTacTile) {
+							if (game.pvp) {
+								if (game.state == CGame::GameStates::Player1Turn) {
+									tryPlace(_button->tictacX, _button->tictacY, false);
+									if (!game.isMade) makeNodes(game.startNode, 1, true);
+									game.state = CGame::GameStates::Player2Turn;
+								}
+								else {
+									tryPlace(_button->tictacX, _button->tictacY, true);
+									if (!game.isMade) makeNodes(game.startNode, 1, true);
+									game.state = CGame::GameStates::Player1Turn;
+								}
+							}
+							else {
+								tryPlace(_button->tictacX, _button->tictacY, false);
+								game.state = CGame::GameStates::AITurn;
+							}
+							
+							break;
+						}
 					}
 				}
 			}
@@ -728,12 +835,13 @@ void CreateTextButton(void(*function)(), std::string _string, int _fontSize, sf:
 	tempText->setFont(game.font);
 
 	//Middle of button
-	tempText->setPosition(100 - (tempText->getGlobalBounds().width) / 2, _y);
+	tempText->setOrigin((tempText->getGlobalBounds().width) / 2, 0);
+	tempText->setPosition(game.wind->getSize().x / 2, _y);
 
 	//Button rect
 	sf::RectangleShape* buttonRect = new sf::RectangleShape;
 	buttonRect->setPosition(0, tempText->getGlobalBounds().top - _padding);
-	buttonRect->setSize(sf::Vector2f(200, 30));
+	buttonRect->setSize(sf::Vector2f(180, 30));
 	buttonRect->setFillColor(_bgColour);
 
 	//create
@@ -742,7 +850,7 @@ void CreateTextButton(void(*function)(), std::string _string, int _fontSize, sf:
 	game.buttomMap[_string] = button;
 }
 
-void CreateClickable(void(*function)(), std::string _string, int _fontSize, sf::Color _tColour, sf::Text::Style _style, float tl_x, float tl_y, float br_x, float br_y, sf::Color _bgColour, bool _isE)
+void CreateTile(int col, int row, std::string _string, int _fontSize, sf::Color _tColour, sf::Text::Style _style, float tl_x, float tl_y, float br_x, float br_y, sf::Color _bgColour, bool _isE)
 {
 	//Text
 	sf::Text* tempText = new sf::Text;
@@ -763,7 +871,10 @@ void CreateClickable(void(*function)(), std::string _string, int _fontSize, sf::
 	buttonRect->setFillColor(_bgColour);
 
 	//create
-	CButton* button = new CButton(buttonRect, tempText, function);
+	CButton* button = new CButton(buttonRect, tempText, nullptr);
+	button->isTicTacTile = true;
+	button->tictacX = col;
+	button->tictacY = row;
 	game.buttons.push_back(button);
 	game.buttomMap[_string] = button;
 }
