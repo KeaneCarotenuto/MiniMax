@@ -850,11 +850,21 @@ void CheckButtonsPressed()
 
 									//If valid, make nodes if needed, otherwise go to other player
 									if (isValid) {
-										game.buttomMap.find("Wait")->second->isEnabled = true;
+										
 
-										if (!game.isMade) makeNodes(game.startNode, 1, true);
+										if (!game.isMade) {
+											game.buttomMap.find("Wait")->second->isEnabled = true;
 
-										game.buttomMap.find("Wait")->second->isEnabled = false;
+											//Update and draw board
+											UpdateBoard();
+											Draw();
+
+											makeNodes(game.startNode, 1, true);
+
+											game.buttomMap.find("Wait")->second->isEnabled = false;
+										}
+
+										
 
 										game.state = CGame::GameStates::Player2Turn;
 									}
