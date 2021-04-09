@@ -163,7 +163,7 @@ void Menu() {
 
 int main() {
 	//Set seed
-	srand(time(0));
+	srand(time((time_t* const)0));
 
 	//Creating Different Windows
 	sf::RenderWindow window(sf::VideoMode(350, 350), "Tic-Tac-Toe - By Keane Carotenuto");
@@ -240,7 +240,7 @@ void CreateButtons()
 	for (int y = 0; y < 3; y++) {
 		for (int x = 0; x < 3; x++) {
 
-			CreateTile(x, y, to_string(x) + to_string(y), 50, sf::Color::White, sf::Text::Style::Bold, x * 120, y * 120, x * 120 + 110, y * 120 + 110, sf::Color::White, true);
+			CreateTile(x, y, to_string(x) + to_string(y), 50, sf::Color::White, sf::Text::Style::Bold, (float)(x * 120), (float)(y * 120), (float)(x * 120 + 110), (float)(y * 120 + 110), sf::Color::White, true);
 			game.buttomMap.find(to_string(x) + to_string(y))->second->text->setString("");
 		}
 	}
@@ -386,8 +386,8 @@ void EndGame(string winner)
 	game.buttomMap.find("Winner")->second->rect->setFillColor(winner == "X" ? sf::Color::Color(100,0,0,200) : winner == "O" ? sf::Color::Color(0, 0, 100, 200) : sf::Color::Color(0,0,0,200));
 	game.buttomMap.find("Winner")->second->rect->setOutlineColor(sf::Color::Black);
 	game.buttomMap.find("Winner")->second->rect->setOutlineThickness(2.0f);
-	game.buttomMap.find("Winner")->second->text->setOrigin((game.buttomMap.find("Winner")->second->text->getGlobalBounds().width) / 2, 0);
-	game.buttomMap.find("Winner")->second->text->setPosition(game.wind->getSize().x / 2, game.buttomMap.find("Winner")->second->text->getPosition().y);
+	game.buttomMap.find("Winner")->second->text->setOrigin((game.buttomMap.find("Winner")->second->text->getGlobalBounds().width) / 2.0f, 0.0f);
+	game.buttomMap.find("Winner")->second->text->setPosition(game.wind->getSize().x / 2.0f, game.buttomMap.find("Winner")->second->text->getPosition().y);
 
 	game.buttomMap.find("Menu")->second->isEnabled = true;
 	game.buttomMap.find("Menu")->second->rect->setOutlineColor(sf::Color::Black);
@@ -909,7 +909,7 @@ void CreateTextButton(void(*function)(), std::string _string, int _fontSize, sf:
 
 	//Middle of button
 	tempText->setOrigin((tempText->getGlobalBounds().width) / 2, 0);
-	tempText->setPosition(game.wind->getSize().x / 2, _y);
+	tempText->setPosition(game.wind->getSize().x / 2.0f, _y);
 
 	//Button rect
 	sf::RectangleShape* buttonRect = new sf::RectangleShape;
