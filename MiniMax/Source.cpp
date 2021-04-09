@@ -1,4 +1,17 @@
-//Disable 
+// Bachelor of Software Engineering
+// Media Design School
+// Auckland
+// New Zealand
+// 
+// (c) 2021 Media Design School
+//
+// File Name   : Source.cpp
+// Description : Main file containing most/all logic
+// Author      : Keane Carotenuto
+// Mail        : KeaneCarotenuto@gmail.com
+
+
+//Disable warning about SFML code
 #pragma warning( disable : 26812)
 
 //Includes

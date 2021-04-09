@@ -1,3 +1,15 @@
+// Bachelor of Software Engineering
+// Media Design School
+// Auckland
+// New Zealand
+// 
+// (c) 2021 Media Design School
+//
+// File Name   : CGame.h
+// Description : Game class for storing game info (probably could just be singleton)
+// Author      : Keane Carotenuto
+// Mail        : KeaneCarotenuto@gmail.com
+
 #pragma once
 #include <vector>
 

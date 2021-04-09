@@ -1,3 +1,15 @@
+// Bachelor of Software Engineering
+// Media Design School
+// Auckland
+// New Zealand
+// 
+// (c) 2021 Media Design School
+//
+// File Name   : CNode.h
+// Description : Node class for tree construction
+// Author      : Keane Carotenuto
+// Mail        : KeaneCarotenuto@gmail.com
+
 #pragma once
 #include <vector>
 
